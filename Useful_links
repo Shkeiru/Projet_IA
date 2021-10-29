@@ -1,0 +1,11 @@
+Herzsprung-Russell Diagram using gaia data 
+https://www.oca.eu/images/LAGRANGE/EcolesThematiques/2019VO/tctuto-2.pdf
+
+Gaia doc on data extraction 
+https://www.cosmos.esa.int/web/gaia-users/archive/programmatic-access#CommandLineFlag
+
+Python Table access protocol package, with gaia in mind 
+https://github.com/mfouesneau/tap
+
+Gaia header with description of the data columns 
+https://gea.esac.esa.int/archive/documentation/GEDR3/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html
