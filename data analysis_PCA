@@ -1,0 +1,6 @@
+Data analysis: 
+
+49 usefull columns, 
+
+important column: 'phot_g_mean_flux', 'phot_bp_mean_flux', 'phot_rp_mean_flux'. 
+there is a correlation between them
