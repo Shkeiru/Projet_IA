@@ -1,0 +1,7 @@
+
+Highest precision parallaxes
+
+SELECT *
+FROM gaiadr2.gaia_source
+WHERE parallax_over_error > 1000
+
