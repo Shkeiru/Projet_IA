@@ -19,7 +19,13 @@ https://vaex.io/docs/
 Gaia edr3
 https://www.cosmos.esa.int/web/gaia/earlydr3
 
-
 Gaia 3 documentation : 
-
 https://gea.esac.esa.int/archive/documentation/GEDR3/index.html
+
+
+How to write ADQL for Gaia:
+https://www.cosmos.esa.int/web/gaia-users/archive/writing-queries#ADQLQueryExamples
+
+ADQL syntax:
+https://www.ivoa.net/documents/ADQL/20180112/PR-ADQL-2.1-20180112.html#tth_sEc2.1.7
+
