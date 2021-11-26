@@ -1,0 +1,121 @@
+#%%
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astroquery.gaia import Gaia 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.io import loadmat
+from sklearn.decomposition import PCA
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+import tensorflow as tf
+import keras_tuner as kt
+from tensorflow import keras
+#%%
+print('got here')
+coord=SkyCoord(ra=280,dec=60, unit=(u.degree, u.degree), frame='icrs')
+width=u.Quantity(0.1, u.deg)
+height=u.Quantity(0.1, u.deg)
+job = Gaia.launch_job_async("SELECT * \
+FROM gaiaedr3.gaia_source \
+WHERE parallax_over_error > 10 \
+AND phot_bp_mean_flux_over_error > 10 \
+AND phot_rp_mean_flux_over_error > 10 \
+AND astrometric_excess_noise < 1 \
+AND random_index < 10000 ")
+print('got here 22')
+print(job)
+r=job.get_results()
+r.pprint()
+#%%
+#R= r.to_pandas()
+
+#%%
+X=r.to_pandas()
+R= r.to_pandas()
+
+# %%
+X=R.drop(columns=['designation',
+'astrometric_primary_flag', 'solution_id', 'source_id', 'random_index', 'ref_epoch'])
+R=R.drop(columns=['designation',
+'astrometric_primary_flag', 'solution_id', 'source_id', 'random_index', 'ref_epoch', 'bp_rp','phot_g_mean_mag', 'astrometric_excess_noise', 'ra_error','dec_error' , 'parallax_error', 'parallax_over_error', 'pmdec_error' , 'phot_g_mean_flux_over_error','dr2_radial_velocity_error','phot_bp_mean_flux_over_error', 'phot_rp_mean_flux_over_error', 'pmra_error', 'pseudocolour_error' ])
+X = X.fillna(0)
+R = R.fillna(0)
+print(R)
+
+#%%
+#X=X.iloc[:,0:97]
+#R=R.iloc[:,0:97]
+#%%
+#process of the data with the PCA
+pca=PCA(n_components=5)
+pca.fit(R)
+R=pca.fit_transform(R)
+
+
+
+plt.plot(np.cumsum(pca.explained_variance_ratio_))
+plt.xlabel('n components')
+plt.ylabel('cumulative variance')
+#%%
+#plotting snippet
+ext = X["astrometric_excess_noise"].max()-X["astrometric_excess_noise"].min()
+fig = plt.figure(figsize=(12,8))
+X1 = X["bp_rp"]
+Y = X["phot_g_mean_mag"] #+ 5*np.log10(R["parallax"]/100)
+sns.relplot(x=X1, y=-Y, hue=X["astrometric_excess_noise"])
+plt.savefig("./fig.png")
+plt.show()
+
+
+# %%
+## doing the RN: 
+
+(X_train, X_test) = train_test_split(R, test_size= 0.3, train_size= 0.7) 
+(Y_train, Y_test) = train_test_split(X["astrometric_excess_noise", "phot_g_mean_mag", "bp_rp"], test_size= 0.2, train_size= 0.8)
+
+
+#%%
+
+'''We decide to run the experiment on N All-to-All layers, 
+each containing M neurons, each with a dropout rate of D
+the test will go on 1 epoch. 
+This mean that we search a point in a 3 dimensional space'''
+
+class MyHypermodel (kt.HyperModel): #And now, we use the Hypermodel Class to build our model using the hyperparamters 
+    
+    def build(self, hp):
+        model = Sequential()
+        model.add(Dense(hp.Int("Neurons", 100, 1000, 100),input_shape=(len(X_train),), activation='relu'))
+        for k in range(hp.Int("Layers", 1, 10, 1)-1):
+            model.add(Dense(hp.Int("Neurons", 100, 1000, 100),activation='relu'))
+            model.add(Dropout(hp.Float("Drop", 0.01, 0.1, 0.01))) #We know from the last test that a low dropout rate ensure the best results
+        model.add(Dense(3, activation='softmax', output_shape=3)) # Yeah, no initialization, since our classes 
+        #number is defined at the start of our program'''
+
+        model.compile(loss=keras.losses.categorical_crossentropy,
+                  optimizer=tf.keras.optimizers.Adam(1e-5),
+                  metrics=['accuracy']
+        )
+
+
+        return model
+
+'''hmod = MyHypermodel()
+
+tuner = kt.Hyperband(
+    hmod,
+    'accuracy',
+    5,
+    directory = "./Trials",
+    hyperband_iterations= 1,
+     #Ihave only one computer, with a poor GTX 1070 to run it (The RTX 3070 is on the way, but still in China :D )
+)
+
+print(tuner.search_space_summary())
+#tuner.search(X_train,Y_train, epochs = 2, validation_data = (X_test,Y_test))
+print(tuner.results_summary())'''
+# %%
